@@ -15,23 +15,76 @@ const T = {
 };
 
 // ─── DATA ─────────────────────────────────────────────────────────────────────
+
+// ─── INDUSTRY PROFILES ────────────────────────────────────────────────────────
+const INDUSTRIES = {
+  saas: {
+    label: "B2B SaaS",
+    usageTracked: true, npsRelevant: true, expansionType: "seats / modules / tiers",
+    healthNote: "Usage trend is your strongest leading indicator. A declining DAU/MAU ratio typically precedes churn by 60–90 days.",
+    expansionNote: "Land-and-expand is the primary growth motion. Map whitespace to specific teams or use cases the account hasn't activated yet.",
+  },
+  industrial: {
+    label: "Industrial / Manufacturing",
+    usageTracked: false, npsRelevant: false, expansionType: "additional SKUs / locations / volume",
+    healthNote: "Usage metrics don't apply. Relationship depth, reorder frequency, and account team stability are your leading indicators.",
+    expansionNote: "Expansion typically means new product lines, additional plants, or volume increases. Fleet and multi-site accounts have the most whitespace.",
+  },
+  professional_services: {
+    label: "Professional Services",
+    usageTracked: false, npsRelevant: true, expansionType: "additional engagements / retainer scope",
+    healthNote: "Client satisfaction and relationship breadth matter most. Single-threaded relationships (one contact) are a significant churn risk.",
+    expansionNote: "Expansion is relationship-driven. The question is whether the client sees you as a vendor or a partner. Partners get early access to new problems.",
+  },
+  healthcare: {
+    label: "Healthcare & Life Sciences",
+    usageTracked: true, npsRelevant: false, expansionType: "additional facilities / departments / indications",
+    healthNote: "Clinical adoption depth is the health signal that matters. A product used in one unit but not enterprise-wide is vulnerable at renewal.",
+    expansionNote: "IDN and health system accounts have significant whitespace across facilities and service lines. Formulary and contract status are expansion preconditions.",
+  },
+  financial_services: {
+    label: "Financial Services",
+    usageTracked: true, npsRelevant: true, expansionType: "additional business lines / AUM / entities",
+    healthNote: "Compliance and audit outcomes signal relationship health. A client who passes audits cleanly is far less likely to churn than one dealing with compliance issues on your platform.",
+    expansionNote: "Expansion follows M&A and growth in AUM or entity count. Stay close to finance and legal teams — they see these signals before anyone else.",
+  },
+  logistics: {
+    label: "Logistics & Supply Chain",
+    usageTracked: true, npsRelevant: false, expansionType: "additional lanes / volume / services",
+    healthNote: "On-time and claims performance are your health metrics. A shipper tracking your performance is building the case for either expansion or a competitor RFP.",
+    expansionNote: "Expansion is volume and lane-driven. Accounts that add lanes or increase freight volume are showing trust signals — treat them as expansion opportunities proactively.",
+  },
+  government: {
+    label: "Government & Public Sector",
+    usageTracked: false, npsRelevant: false, expansionType: "additional agencies / task orders / options",
+    healthNote: "Budget cycle timing and contract vehicle status are your health indicators. A contract up for recompete without a clear incumbent advantage is at risk.",
+    expansionNote: "Expansion in government comes through task orders, contract options, and new agencies on existing vehicles. Relationship with the contracting officer matters as much as the program office.",
+  },
+};
+
+// Health question weights reflect actual churn prediction research:
+// Champion loss and usage decline are the two strongest leading indicators (~60 days lead time)
+// Feature adoption depth is the strongest structural health signal
+// Support ticket volume is a lagging indicator — lower weight
 const HEALTH_QUESTIONS = [
-  { id: "usage",     label: "Product Usage Trend",       category: "health", weight: 3, options: [{ label: "Declining >20%", value: 1 }, { label: "Flat", value: 2 }, { label: "Growing", value: 3 }, { label: "Significantly Up", value: 4 }] },
-  { id: "champion",  label: "Champion Status",            category: "health", weight: 3, options: [{ label: "Left / Unknown", value: 1 }, { label: "Passive", value: 2 }, { label: "Engaged", value: 3 }, { label: "Active Advocate", value: 4 }] },
-  { id: "nps",       label: "Last NPS / Sentiment",       category: "health", weight: 2, options: [{ label: "Detractor (<6)", value: 1 }, { label: "Passive (7–8)", value: 2 }, { label: "Promoter (9–10)", value: 3 }, { label: "No Data", value: 2 }] },
-  { id: "support",   label: "Support Ticket Volume",      category: "health", weight: 2, options: [{ label: "High / Escalated", value: 1 }, { label: "Moderate", value: 2 }, { label: "Low", value: 3 }, { label: "None", value: 4 }] },
-  { id: "qbr",       label: "Last Executive Check-in",    category: "health", weight: 1, options: [{ label: ">6 months ago", value: 1 }, { label: "3–6 months", value: 2 }, { label: "1–3 months", value: 3 }, { label: "<1 month", value: 4 }] },
-  { id: "adoption",  label: "Feature Adoption Depth",     category: "health", weight: 2, options: [{ label: "<25% of core features", value: 1 }, { label: "25–50%", value: 2 }, { label: "50–75%", value: 3 }, { label: ">75%", value: 4 }] },
-  { id: "renewal",   label: "Renewal Timeline",            category: "health", weight: 2, options: [{ label: "<60 days", value: 1 }, { label: "60–120 days", value: 2 }, { label: "120–180 days", value: 3 }, { label: ">180 days", value: 4 }] },
+  { id: "champion",  label: "Champion Status",            category: "health", weight: 5, predictive: true,  options: [{ label: "Left / Unknown", value: 1 }, { label: "Passive", value: 2 }, { label: "Engaged", value: 3 }, { label: "Active Advocate", value: 4 }] },
+  { id: "usage",     label: "Product Usage Trend",       category: "health", weight: 5, predictive: true,  options: [{ label: "Declining >20%", value: 1 }, { label: "Flat", value: 2 }, { label: "Growing", value: 3 }, { label: "Significantly Up", value: 4 }] },
+  { id: "adoption",  label: "Feature Adoption Depth",     category: "health", weight: 4, predictive: true,  options: [{ label: "<25% of core features", value: 1 }, { label: "25–50%", value: 2 }, { label: "50–75%", value: 3 }, { label: ">75%", value: 4 }] },
+  { id: "renewal",   label: "Renewal Timeline",           category: "health", weight: 3, predictive: false, options: [{ label: "<60 days", value: 1 }, { label: "60–120 days", value: 2 }, { label: "120–180 days", value: 3 }, { label: ">180 days", value: 4 }] },
+  { id: "nps",       label: "Last NPS / Sentiment",       category: "health", weight: 2, predictive: false, options: [{ label: "Detractor (<6)", value: 1 }, { label: "Passive (7–8)", value: 2 }, { label: "Promoter (9–10)", value: 3 }, { label: "No Data", value: 2 }] },
+  { id: "qbr",       label: "Last Executive Check-in",   category: "health", weight: 2, predictive: false, options: [{ label: ">6 months ago", value: 1 }, { label: "3–6 months", value: 2 }, { label: "1–3 months", value: 3 }, { label: "<1 month", value: 4 }] },
+  { id: "support",   label: "Support Ticket Volume",      category: "health", weight: 1, predictive: false, options: [{ label: "High / Escalated", value: 1 }, { label: "Moderate", value: 2 }, { label: "Low", value: 3 }, { label: "None", value: 4 }] },
 ];
 
+// Expansion weights: whitespace + active sponsor are the strongest predictors of near-term expansion
+// Company growth is important but slower-moving; referrals are a strong signal of advocacy readiness
 const EXPANSION_QUESTIONS = [
+  { id: "whitespace",       label: "Untapped Product Whitespace",    category: "expansion", weight: 5, options: [{ label: "Fully deployed", value: 1 }, { label: "Minor whitespace", value: 2 }, { label: "Moderate whitespace", value: 3 }, { label: "Significant whitespace", value: 4 }] },
+  { id: "executiveSponsor", label: "Executive Sponsor Engagement",   category: "expansion", weight: 4, options: [{ label: "None", value: 1 }, { label: "Passive", value: 2 }, { label: "Engaged", value: 3 }, { label: "Champion for expansion", value: 4 }] },
   { id: "companyGrowth",    label: "Company Growth Signals",         category: "expansion", weight: 3, options: [{ label: "Declining / Layoffs", value: 1 }, { label: "Flat", value: 2 }, { label: "Moderate Growth", value: 3 }, { label: "Strong Growth / Funding", value: 4 }] },
   { id: "useCaseWidth",     label: "Use Case Coverage",              category: "expansion", weight: 3, options: [{ label: "Single use case only", value: 1 }, { label: "2 use cases", value: 2 }, { label: "3+ use cases", value: 3 }, { label: "Platform-wide", value: 4 }] },
-  { id: "budgetSignals",    label: "Budget Signals",                  category: "expansion", weight: 2, options: [{ label: "Budget freeze / cuts", value: 1 }, { label: "Unknown", value: 2 }, { label: "Stable", value: 3 }, { label: "Expanding / New budget", value: 4 }] },
-  { id: "executiveSponsor", label: "Executive Sponsor Engagement",   category: "expansion", weight: 2, options: [{ label: "None", value: 1 }, { label: "Passive", value: 2 }, { label: "Engaged", value: 3 }, { label: "Champion for expansion", value: 4 }] },
-  { id: "referrals",        label: "Referral / Advocacy Activity",   category: "expansion", weight: 1, options: [{ label: "No activity", value: 1 }, { label: "Open to reference", value: 2 }, { label: "Active reference", value: 3 }, { label: "Proactively referring", value: 4 }] },
-  { id: "whitespace",       label: "Untapped Product Whitespace",    category: "expansion", weight: 3, options: [{ label: "Fully deployed", value: 1 }, { label: "Minor whitespace", value: 2 }, { label: "Moderate whitespace", value: 3 }, { label: "Significant whitespace", value: 4 }] },
+  { id: "budgetSignals",    label: "Budget Signals",                 category: "expansion", weight: 2, options: [{ label: "Budget freeze / cuts", value: 1 }, { label: "Unknown", value: 2 }, { label: "Stable", value: 3 }, { label: "Expanding / New budget", value: 4 }] },
+  { id: "referrals",        label: "Referral / Advocacy Activity",   category: "expansion", weight: 2, options: [{ label: "No activity", value: 1 }, { label: "Open to reference", value: 2 }, { label: "Active reference", value: 3 }, { label: "Proactively referring", value: 4 }] },
 ];
 
 const QUADRANTS = {
@@ -71,7 +124,7 @@ function OptionBtn({ options, value, onChange }) {
           borderLeft: value === opt.value ? `3px solid ${T.accent}` : `3px solid transparent`,
           borderRadius: 6, cursor: "pointer",
           fontFamily: T.sans, fontSize: 13,
-          color: value === opt.value ? T.accentText : T.textSecondary,
+          color: value === opt.value ? "#166534" : T.textSecondary,
           fontWeight: value === opt.value ? 500 : 400,
           transition: "all 0.15s"
         }}>{opt.label}</button>
@@ -80,7 +133,7 @@ function OptionBtn({ options, value, onChange }) {
   );
 }
 
-const emptyAccount = () => ({ name: "", arr: "", answers: {} });
+const emptyAccount = () => ({ name: "", arr: "", answers: {}, industry: "saas" });
 
 // ─── APP ──────────────────────────────────────────────────────────────────────
 export default function ChurnExpansionScorecard() {
@@ -104,6 +157,7 @@ export default function ChurnExpansionScorecard() {
   const totalQ     = HEALTH_QUESTIONS.length + EXPANSION_QUESTIONS.length;
   const canMatrix  = scored.some(a => a.answered >= 4);
   const qGroups    = { protect: [], nurture: [], save: [], maintain: [] };
+  const currentIndustry = INDUSTRIES[current.industry] || INDUSTRIES.saas;
   scored.forEach(a => { if (a.answered >= 4) qGroups[a.quadrant].push(a); });
 
   return (
@@ -131,7 +185,7 @@ export default function ChurnExpansionScorecard() {
                 padding: "8px 14px", background: showMatrix === tab.v ? "#1e293b" : "transparent",
                 border: "none", borderRadius: 5, cursor: tab.v && !canMatrix ? "not-allowed" : "pointer",
                 fontFamily: T.mono, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
-                color: showMatrix === tab.v ? "#e2e8f0" : tab.v && !canMatrix ? "#334155" : "#475569",
+                color: showMatrix === tab.v ? "#f1f5f9" : tab.v && !canMatrix ? "#475569" : "#94a3b8",
                 transition: "all 0.15s"
               }}>{tab.l}</button>
             ))}
@@ -178,6 +232,16 @@ export default function ChurnExpansionScorecard() {
 
             {/* Scoring panel */}
             <div style={{ background: T.cardBg, border: `1px solid ${T.cardBorder}`, borderRadius: 10, padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+              {/* Industry + Name / ARR */}
+              <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: `1px solid ${T.cardBorder}` }}>
+                <label style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: T.textMuted, display: "block", marginBottom: 6 }}>Industry</label>
+                <select value={current.industry} onChange={e => updateAccount(activeAccount, "industry", e.target.value)}
+                  style={{ width: "100%", padding: "8px 10px", border: `1px solid ${T.cardBorder}`, borderRadius: 6,
+                    fontFamily: T.mono, fontSize: 11, color: T.textPrimary, background: T.cardBg, cursor: "pointer" }}>
+                  {Object.entries(INDUSTRIES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+                </select>
+              </div>
+
               {/* Name / ARR */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 140px", gap: 12, marginBottom: 20, paddingBottom: 18, borderBottom: `1px solid ${T.cardBorder}` }}>
                 {[{ key: "name", label: "Account Name", placeholder: "Acme Corp" }, { key: "arr", label: "ARR", placeholder: "$48K" }].map(f => (
@@ -202,6 +266,21 @@ export default function ChurnExpansionScorecard() {
                       <div style={{ fontFamily: T.mono, fontSize: m.small ? 12 : 22, fontWeight: 700, color: m.color, lineHeight: 1 }}>{m.value}</div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Industry health note */}
+              {current.industry && (
+                <div style={{ background: T.accentLight, border: `1px solid ${T.accentBorder}`, borderRadius: 6,
+                  padding: "10px 12px", marginBottom: 14 }}>
+                  <div style={{ fontFamily: T.mono, fontSize: 9, color: T.accent, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
+                    {activeTab === "health" ? "Health Signal Context" : "Expansion Signal Context"}
+                  </div>
+                  <div style={{ fontFamily: T.mono, fontSize: 10, color: T.accentText, lineHeight: 1.5 }}>
+                    {activeTab === "health"
+                      ? (INDUSTRIES[current.industry]||INDUSTRIES.saas).healthNote
+                      : (INDUSTRIES[current.industry]||INDUSTRIES.saas).expansionNote}
+                  </div>
                 </div>
               )}
 
